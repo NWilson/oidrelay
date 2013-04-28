@@ -15,7 +15,7 @@
   </servlet-mapping>
   <servlet-mapping>
     <servlet-name>RelayServlet</servlet-name>
-    <url-pattern>/*/*</url-pattern>
+    <url-pattern>/u/*</url-pattern>
   </servlet-mapping>
 
   <security-constraint>
