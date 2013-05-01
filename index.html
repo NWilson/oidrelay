@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OpenID Indirect Relying Parties by NWilson</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>OpenID Indirect Relying Parties</h1>
+        <p>This specification describes a means by which an OpenID Relying Party (RP) can communicate with another server in order to perform delegated OpenID authentication.</p>
+
+        <p class="view"><a href="https://github.com/NWilson/oidrelay">View the Project on GitHub <small>NWilson/oidrelay</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/NWilson/oidrelay/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/NWilson/oidrelay/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/NWilson/oidrelay">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <blockquote>
+<p>A server which is behind a firewall or NAT may wish to authenticate a user via OpenID. Without leveraging another server publicly accessible on the internet, this is not possible. A simple relay service running on a trusted server enables this use-case.</p>
+</blockquote>
+
+<h2>Notation and terminology</h2>
+
+<p>All terms are taken from [OpenID 2.0] unless otherwise noted.</p>
+
+<ul>
+<li>An Indirect Relying Party is a Relying Party wishing to authenticate a client, but without necessarily having a public internet address.</li>
+<li>A Relay Server is a Relying Party which transmits success/failure of OpenID assertions to an Indirect Relying Party.</li>
+</ul><h2>Protocol overview</h2>
+
+<ol>
+<li>An Indirect Relying Party wishing to authenticate a user acquires a User-Supplied Identifier, which is to be transformed into an Identifier via Discovery.</li>
+<li>The IRP makes an HTTP POST request to the Relay Server, specifying this identifier. The Relay Server is likely to require the presence of authentication headers in the request to grant service.</li>
+<li>The RS sends a chunked response, initially giving the IRP a URL containing a token representing a RP endpoint. The RP will function as an OpenID RP at this address.</li>
+<li>The IRP redirects the User-Agent to this URL as normal, which performs OpenID authentication.</li>
+<li>The User-Agent will eventually land at a URL chosen by the Relay Server carrying an OpenID assertion.</li>
+<li>The relay server completes the chunked response, sending the relying server an indication of success or failure.</li>
+<li>At this point, or if a timeout occurs, the IRP may can close any window or iframe it may have opened in the User-Agent.</li>
+</ol><h2>Indirect Authentication Request</h2>
+
+<h3>Request</h3>
+
+<p>The message MUST be encoded as a POST body, as specified by [OpenID 2.0] Section 4.1.2.</p>
+
+<p>The message MUST contain the following fields:</p>
+
+<ul>
+<li>
+<code>openid.ns</code><br>
+Value: " http:// micro.nicholaswilson.me.uk/openid-indirect"</li>
+<li>
+<code>openid.mode</code><br>
+Value: "indirect-request" </li>
+<li>
+<code>openid.identifier</code><br>
+Value: An identifier suitable for Normalization as described by [OpenID 2.0] Section 7.2.</li>
+</ul><h3>Response</h3>
+
+<p>The body of a response to an Indirect Authentication Request consists of an HTTP Response body in Key-Value Form. The content-type of the response SHOULD be <code>"text/plain"</code>. The message is transmitted in three phases, signalled by the endpoint and mode fields.</p>
+
+<h4>OP query phase</h4>
+
+<p>The message MUST contain the following fields:</p>
+
+<ul>
+<li>
+<code>ns</code><br>
+Value: "<a href="http://micro.nicholaswilson.me.uk/openid-indirect">http://micro.nicholaswilson.me.uk/openid-indirect</a>" </li>
+</ul><p>In the case of an error (perhaps during Discovery), the server MUST respond with a status code of 400, and may send the fields error, contact, and reference as described in [OpenID 2.0] Section 5.1.2.2.</p>
+
+<p>In the case of success, the server MUST respond with a status code of 200 and include the following fields:</p>
+
+<ul>
+<li>
+<code>endpoint</code><br>
+Value: the URL of the OP endpoint</li>
+<li>
+<code>claimed_id</code><br>
+Value: (optional) The Claimed Identifier.</li>
+<li>
+<code>identity</code><br>
+Value: (optional) The OP-Local Identifier.</li>
+<li>
+<code>assoc_handle</code><br>
+Value: (optional) A handle for an association between the Relying Party and the OP that SHOULD be used to sign the response.</li>
+<li>
+<code>return_to</code><br>
+Value: (optional) URL to which the OP SHOULD return the User-Agent with the response indicating the status of the request.</li>
+<li>
+<code>realm</code><br>
+Value: (optional) URL pattern the OP SHOULD ask the end user to trust.
+The endpoint field is the last field to be sent and indicates that all fields have been sent. All these fields are used by the Indirect Relying Party to compose an Indirect Request to the OP. Note that the IRP selects the mode ("checkid_immediate" or "checkid_setup"). In addition, fields corresponding to extensions may also be echoed by the IRP.</li>
+</ul><h4>Keepalive phase</h4>
+
+<p>The Relay Server continues to send more fields after endpoint which the IRP SHALL ignore if these have unspecified value. In particular, the IRP MUST handle further fields of the form:</p>
+
+<ul>
+<li>
+<code>keepalive</code><br>
+Value: ""</li>
+</ul><h4>Result phase</h4>
+
+<p>The final fields begin with the following:</p>
+
+<ul>
+<li>
+<code>mode</code><br>
+Value: either "error" or "success"</li>
+</ul><p>In the case of  "success", these fields may be sent:</p>
+
+<ul>
+<li>
+<code>claimed_id</code><br>
+Value: (optional) The Claimed Identifier. "openid.claimed_id" and "openid.identity" SHALL be either both present or both absent.</li>
+<li>
+<code>identity</code><br>
+Value: (optional) The OP-Local Identifier</li>
+</ul><p>Otherwise, the authentication failed and the field error may set sent to indicate the cause.</p>
+
+<h2>Security considerations</h2>
+
+<p>The login-status of a user with respect to an OP must be considered confidential information. The Relying Party and the OpenID Provider must ensure that unauthorised parties do not access this information. For this reason, the RP SHALL NOT perform any further redirections of the User-Agent after verifying any assertions returned. That is, upon receiving the assertion, the RP does not redirect the User-Agent back to an endpoint specified by the Indirect Relying Party to convey information about whether the authentication succeeded or failed. The channel for such a redirect would have to be secure, but it is unlikely that an Indirect Relying Party has the required SSL certificates to be able to provide a secure endpoint to redirect to. Instead, the return value is sent back over the original channel the IRP opened to the Relay Server, which is likely to have an SSL certificate enabling the IRP to connect securely. As well as accomplishing the purpose of serving IRPs without appropriate certificates, we also ensure the security of the flow by guaranteeing results are returned only once to the party who requested them.</p>
+
+<p>The choice of RP endpoint and realm is left to the Relay Server. It is expected that such a relay will present a unique endpoint to each user of the service, and require the user's credentials to be presented by an IRP before the user's login status is disclosed to the IRP.</p>
+
+<p>Example flow
+The IRP sends the request corresponding to the user Aladdin:</p>
+
+<pre><code>POST /oidrelay/api HTTP/1.1
+Host: auth.acme.com
+Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+Content-Type: application/x-www-form-urlencoded
+Content-Length: &lt;length&gt;
+
+openid.ns=http://micro.nicholaswilson.me.uk/openid-indirect&amp;openid.mode=indirect-request&amp;openid.identifier=https://www.google.com/accounts/o8/id
+</code></pre>
+
+<p>The Relay Server responds with:</p>
+
+<pre><code>HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Transfer-Encoding: chunked
+
+&lt;chunk-len&gt;
+ns:http://micro.nicholaswilson.me.uk/openid-indirect
+return_to:http://auth.acme.com/users/aladdin/token-2b926419a9cd4093711c
+realm:http://auth.acme.com/users/aladdin/
+&lt;more fields...&gt;
+endpoint:http://auth.acme.com/users/aladdin/api
+&lt;chunk-len&gt;
+keepalive:
+&lt;chunk-len&gt;
+keepalive:
+&lt;chunk-len&gt;
+mode:success
+claimed_id:&lt;...&gt;
+</code></pre>
+
+<h2>References</h2>
+
+<ul>
+<li>[OpenID 2.0] <a href="http://openid.net/specs/openid-authentication-2_0.html#extensions">OpenID Authentication 2.0 - Final</a>
+</li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/NWilson">NWilson</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
