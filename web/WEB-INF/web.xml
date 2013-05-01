@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app>
-  <display-name>Example</display-name>
+  <display-name>OpenID relay service</display-name>
 
   <!-- Declare the existence of a servlet. -->
   <servlet>

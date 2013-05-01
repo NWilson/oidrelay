@@ -1,3 +1,21 @@
+/*
+Copyright (c) 2013 Nicholas Wilson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 package oidrelay;
 import oidrelay.GetFromPostServlet.TokenFactory;
 import oidrelay.GetFromPostServlet.TokenWithEndpoint;
@@ -8,7 +26,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * Out version of the TokenFactory scopes requests by user id. Each GET
+ * Our version of the TokenFactory scopes requests by user id. Each GET
  * connection must come with an associated authentication (eg. HTTP
  * authentication such that HttpServletRequest.getRemoteUser() returns something
  * identifying a user). The data POSTed to us then are scoped per-user.
@@ -49,19 +67,15 @@ class PerUserTokenFactory implements TokenFactory {
                                      urlToMap+user+"/");
     }
 
-    public TokenWithEndpoint extractToken(HttpServletRequest req)
+    public TokenWithEndpoint extractToken(String reqURI)
     {
-        String ctxPath = req.getContextPath();
-        String reqURI = req.getRequestURI();
-        reqURI = ctxPath.length() <= reqURI.length() ?
-                    reqURI.substring(ctxPath.length()) : null;
         String user = null;
         String idStr = null;
         byte[] id = null;
         if (reqURI != null) {
             String[] parts = reqURI.split("/");
             String[] mapParts = urlToMap.split("/");
-            if (parts.length == 3 + (mapParts.length-2) &&
+            if (parts.length == 3 + (mapParts.length-1) &&
                 "".equals(parts[0]) && reqURI.startsWith(urlToMap))
             {
                 user = parts[parts.length-2];
