@@ -4,17 +4,18 @@
 
   <!-- Declare the existence of a servlet. -->
   <servlet>
-    <servlet-name>RelayServlet</servlet-name>
-    <servlet-class>RelayServlet</servlet-class>
-  </servlet>
+    <servlet-name>TestServlet</servlet-name>
+    <servlet-class>oidrelay.TestServlet</servlet-class>
+    <async-supported>true</async-supported>
+  </servlet>  
 
   <!-- Map URLs to that servlet. -->
   <servlet-mapping>
-    <servlet-name>RelayServlet</servlet-name>
+    <servlet-name>TestServlet</servlet-name>
     <url-pattern>/api</url-pattern>
   </servlet-mapping>
   <servlet-mapping>
-    <servlet-name>RelayServlet</servlet-name>
+    <servlet-name>TestServlet</servlet-name>
     <url-pattern>/u/*</url-pattern>
   </servlet-mapping>
 
