@@ -10,6 +10,7 @@ war: classes
 	jar cf dist/oidrelay.war -C web .
 
 dist/servlet-api.jar:
+	@mkdir -p dist
 	@printf %s "Looking for the servlet API jar..."
 	@if [ -n "$$SERVLET_LIB" ]; then \
 	  API="`echo "$$SERVLET_LIB"|sed -e '/^\//!s/^/..\//'`"; \
